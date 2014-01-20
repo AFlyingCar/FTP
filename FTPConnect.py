@@ -4,8 +4,7 @@
 #FTPConnect	#
 #################
 
-import urllib2
-import os
+import os, sys
 from ftplib import FTP
 from getpass import getpass
 
@@ -13,49 +12,89 @@ ulogin = True
 
 ftp = FTP('ftp.tylerclay.com') #connects to website
 
-user = raw_input(">>> UserName: ") #gets username
-passw = getpass(">>> Password: ") #gets password
-
 while ulogin:
+	user = raw_input(">>> UserName: ") #gets username
+	passw = getpass(">>> Password: ") #gets password
+
 	try:
 		ftp.login(user, passw) #tries to input username and password
 		ulogin = False
 	except(Exception): #catches login error
 		print ">>> Incorrect login."
-		exit()
+		i=0
+		i+=1
+		if i >= 5:
+			exit()
 
 ftp.cwd('www.tylerclay.com')
-#print "Permissions", "Date Updated", "Files"
+
+print "Permissions", "                                         Date Updated", "Files"
 ftp.retrlines('LIST') #list all directories
 
 while True:
-	loc = raw_input('>>> ') #user lists commands
+	choice = raw_input('>>> ') #user lists commands
 		
 	try:
-		if loc.upper() == 'EXIT': #exits program
+		if choice.lower() == 'exit': #exits program
+			ftp.quit()
 			exit()
-
-		elif loc.split(" ")[0] == 'cd':
-			loc = loc.split(" ")
-
-			try:
-				ftp.cwd(loc[1]) #changes directory to loc
-			except(Exception):
-				print "Could not find ", loc[1], ". Destination does not exist."
 		
-		elif loc == 'ls': #lists directories and files
+		elif choice.lower() == 'help': #prints help for the user
+			print """cd [destination]
+copy [source] [destination]
+exit
+help
+ls
+mkdir [name]
+rmdir [name]
+"""
+
+		elif choice.split(" ")[0] == 'cd':
+			choice = choice.split(" ")
+			try:
+				ftp.cwd(choice[1]) #changes directory to choice
+			except(Exception):
+				print "Could not find", choice[1] + ". Destination does not exist."
+		
+		elif choice == 'ls': #lists directories and files
 			ftp.retrlines('LIST')
 		
-		elif loc.split(" ")[0] == 'mkdir':
-			loc = loc.split(" ")
+		elif choice.split(" ")[0] == 'mkdir': #makes directory
+			choice = choice.split(" ")
 
 			try:
-				os.mkdir(loc[1])
+				ftp.mkd(choice[1])
 
 			except(Exception):
-				print "Destination already exists"
+				print "Destination already exists."
 
-	except(Exception):
-		print loc , ": Command not found."
+		elif choice.split(" ")[0] == 'rmdir': #removes directory
+			ask = raw_input("Warning! This action cannot be undone. Do you wish to continue?(y/n) ")
+
+			if ask == 'y':
+				try:
+					ftp.rmd(choice.split(" ")[1])
+				except(Exception):
+					print "Could not remove", choice.split[1], ". Destination does not exist."
+
+		elif choice.split(" ")[0] == 'copy': #clones directory or file
+			choice = choice.split(" ")
+			loc = choice[1]
+			dest = choice[2]
+
+			os.system("cp ", loc, dest) #runs linux cp command
+		
+		elif choice.split("./")[0] == './': #Incomplete. opens file
+			print choice.split("./")
+			os.system(choice)
+
+		else:
+			print choice, ": Command not found."
+		
+		if choice == '`':
+			sys.exit()
+
+	except(Exception): #catches errors that make it past other error handlers
+		pass
 
 nuclear = u'\u2622'
