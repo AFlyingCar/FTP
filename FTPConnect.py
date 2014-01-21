@@ -42,7 +42,7 @@ while True:
 		
 		elif choice.lower() == 'help': #prints help for the user
 			print """cd [destination]
-copy [source] [file name]
+upload [source] [file name]
 download [name]
 exit
 help
@@ -53,7 +53,7 @@ rmdir [name]
 
 		elif choice.split(" ")[0] == 'cd':
 			choice = choice.split(" ", 1)
-			choice = choice[1].split("")
+			choice = choice[1].split("/")
 			choice.remove('')
 
 			try:
@@ -61,22 +61,24 @@ rmdir [name]
 					ftp.cwd(item) #changes to directory of choice
 
 			except(Exception):
-				print "Could not find " + choice + ". Destination does not exist."
+				print "Could not find", choice, ". Destination does not exist."
 		
-		elif choice == 'ls': #lists directories and files
-			choice.split(" ", 1)
-			choice = choice[1].split("/")
-			loc = ftp.pwd()
-
+		elif choice.split(" ")[0] == 'ls': #lists directories and files
 			try:
-				for item in choice:
-					ftp.cwd(item) #allows the user to list in a separate directory					
+				loc = ftp.pwd()
+				
+				if " " in choice:
+					choice = choice.split(" ", 1)					
+					choice = choice[1].split("/")
+						
+					for item in choice:
+						ftp.cwd(item) #allows the user to list in a separate directory					
 
 				ftp.retrlines('LIST')
 				ftp.cwd(loc)
-				
+
 			except(Exception):
-				print "Could not find " + choice + "."
+				print "Could not find", str(choice) + ". Destination does not exist."
 		
 		elif choice.split(" ")[0] == 'mkdir': #makes directory
 			choice = choice.split(" ")
@@ -96,7 +98,7 @@ rmdir [name]
 				except(Exception):
 					print "Could not remove", choice.split[1], ". Destination does not exist."
 
-		elif choice.split(" ")[0] == 'copy': #copies file
+		elif choice.split(" ")[0] == 'upload': #copies file
 			choice = choice.split(" ")
 			loc = choice[1]
 			name = choice[2]
@@ -106,17 +108,10 @@ rmdir [name]
 				upload = open(loc + name, 'rb') #opens file
 				ftp.storbinary('STOR ' + name, upload) #sends file
 		
-				upload.close() #closes file and FTP
-				ftp.quit()
+				upload.close() #closes file
 
 			except(Exception):
-				print "Could not find " + name + " in " + loc + "."
-
-#			os.system("cp ", loc, dest) #runs linux cp command
-		
-#		elif choice.split("./")[0] == './': #Incomplete. opens file
-#			print choice.split("./")
-#			os.system(choice)
+				print "Could not find", name, "in", loc, "."
 		
 		elif choice.split(" ")[0] == 'download':
 			choice = choice.split(" ", 1)
