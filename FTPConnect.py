@@ -53,7 +53,8 @@ rmdir [name]
 
 		elif choice.split(" ")[0] == 'cd':
 			choice = choice.split(" ", 1)
-			choice = choice[1].split("//")
+			choice = choice[1].split("")
+			choice.remove('')
 
 			try:
 				for item in choice:
@@ -63,7 +64,19 @@ rmdir [name]
 				print "Could not find " + choice + ". Destination does not exist."
 		
 		elif choice == 'ls': #lists directories and files
-			ftp.retrlines('LIST')
+			choice.split(" ", 1)
+			choice = choice[1].split("/")
+			loc = ftp.pwd()
+
+			try:
+				for item in choice:
+					ftp.cwd(item) #allows the user to list in a separate directory					
+
+				ftp.retrlines('LIST')
+				ftp.cwd(loc)
+				
+			except(Exception):
+				print "Could not find " + choice + "."
 		
 		elif choice.split(" ")[0] == 'mkdir': #makes directory
 			choice = choice.split(" ")
