@@ -50,7 +50,7 @@ rmdir [name]
 """
 
 		elif choice.split(" ")[0] == 'cd':
-			choice = choice.split(" ")
+			choice = choice.split(" ", 1)
 			try:
 				ftp.cwd(choice[1]) #changes directory to choice
 			except(Exception):
