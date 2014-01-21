@@ -7,6 +7,7 @@
 import os, sys
 from ftplib import FTP
 from getpass import getpass
+import urllib
 
 ulogin = True
 
@@ -28,7 +29,7 @@ while ulogin:
 
 ftp.cwd('www.tylerclay.com')
 
-print "Permissions", "                                         Date Updated", "Files"
+print "Permissions", "                                         Last Updated", "Files"
 ftp.retrlines('LIST') #list all directories
 
 while True:
@@ -41,7 +42,8 @@ while True:
 		
 		elif choice.lower() == 'help': #prints help for the user
 			print """cd [destination]
-copy [source] [destination]
+copy [source] [file name]
+download [name]
 exit
 help
 ls
@@ -51,10 +53,14 @@ rmdir [name]
 
 		elif choice.split(" ")[0] == 'cd':
 			choice = choice.split(" ", 1)
+			choice = choice[1].split("//")
+
 			try:
-				ftp.cwd(choice[1]) #changes directory to choice
+				for item in choice:
+					ftp.cwd(item) #changes to directory of choice
+
 			except(Exception):
-				print "Could not find", choice[1] + ". Destination does not exist."
+				print "Could not find " + choice + ". Destination does not exist."
 		
 		elif choice == 'ls': #lists directories and files
 			ftp.retrlines('LIST')
@@ -77,19 +83,38 @@ rmdir [name]
 				except(Exception):
 					print "Could not remove", choice.split[1], ". Destination does not exist."
 
-		elif choice.split(" ")[0] == 'copy': #clones directory or file
+		elif choice.split(" ")[0] == 'copy': #copies file
 			choice = choice.split(" ")
 			loc = choice[1]
-			dest = choice[2]
-
-			os.system("cp ", loc, dest) #runs linux cp command
+			name = choice[2]
 		
-		elif choice.split("./")[0] == './': #Incomplete. opens file
-			print choice.split("./")
-			os.system(choice)
+			try:
+
+				upload = open(loc + name, 'rb') #opens file
+				ftp.storbinary('STOR ' + name, upload) #sends file
+		
+				upload.close() #closes file and FTP
+				ftp.quit()
+
+			except(Exception):
+				print "Could not find " + name + " in " + loc + "."
+
+#			os.system("cp ", loc, dest) #runs linux cp command
+		
+#		elif choice.split("./")[0] == './': #Incomplete. opens file
+#			print choice.split("./")
+#			os.system(choice)
+		
+		elif choice.split(" ")[0] == 'download':
+			choice = choice.split(" ", 1)
+			print ftp.pwd()
+			download = urllib.urlretrieve('ftp://ftp.tylerclay.com' + ftp.pwd(), choice[1])
+			x = open(choice[1], 'rb')
+			x.write(download)
+			x.close()
 
 		else:
-			print choice, ": Command not found."
+			print choice + ": Command not found."
 		
 		if choice == '`':
 			sys.exit()
