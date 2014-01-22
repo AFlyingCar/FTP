@@ -20,6 +20,7 @@ while ulogin:
 	try:
 		ftp.login(user, passw) #tries to input username and password
 		ulogin = False
+		
 	except(Exception): #catches login error
 		print ">>> Incorrect login."
 		i=0
@@ -46,39 +47,42 @@ upload [source] [file name]
 download [name]
 exit
 help
-ls
+ls {directory}
 mkdir [name]
 rmdir [name]
 """
 
 		elif choice.split(" ")[0] == 'cd':
-			choice = choice.split(" ", 1)
-			choice = choice[1].split("/")
-			choice.remove('')
+			cd = choice.split(" ", 1)
+			cd.remove("cd")
 
 			try:
-				for item in choice:
+				if "/" in cd:
+					cd = cd.split("/")
+			
+				for item in cd:
 					ftp.cwd(item) #changes to directory of choice
 
 			except(Exception):
-				print "Could not find", choice, ". Destination does not exist."
+				print "Could not find '" + choice.split(" ")[1] + "'. Destination does not exist."
 		
 		elif choice.split(" ")[0] == 'ls': #lists directories and files
 			try:
 				loc = ftp.pwd()
 				
 				if " " in choice:
-					choice = choice.split(" ", 1)					
+					choice = choice.split(" ", 1)
 					choice = choice[1].split("/")
 						
 					for item in choice:
-						ftp.cwd(item) #allows the user to list in a separate directory					
-
+						ftp.cwd(item) #allows the user to list in a separate directory
+				
+				print "Permissions", "                                         Last Updated", "Files"
 				ftp.retrlines('LIST')
 				ftp.cwd(loc)
 
 			except(Exception):
-				print "Could not find", str(choice) + ". Destination does not exist."
+				print "Could not find '" + choice.split(" ")[1] + "'. Destination does not exist."
 		
 		elif choice.split(" ")[0] == 'mkdir': #makes directory
 			choice = choice.split(" ")
@@ -96,7 +100,7 @@ rmdir [name]
 				try:
 					ftp.rmd(choice.split(" ")[1])
 				except(Exception):
-					print "Could not remove", choice.split[1], ". Destination does not exist."
+					print "Could not remove '" + choice.split(" ")[1] + "'. Destination does not exist."
 
 		elif choice.split(" ")[0] == 'upload': #copies file
 			choice = choice.split(" ")
@@ -111,18 +115,20 @@ rmdir [name]
 				upload.close() #closes file
 
 			except(Exception):
-				print "Could not find", name, "in", loc, "."
+				print "Could not find '" + name + "' in '" + loc + "'."
 		
 		elif choice.split(" ")[0] == 'download':
 			choice = choice.split(" ", 1)
 			print ftp.pwd()
 			download = urllib.urlretrieve('ftp://ftp.tylerclay.com' + ftp.pwd(), choice[1])
-			x = open(choice[1], 'rb')
+			loc = raw_input("Type the destination path for where you want to save " + choice[1] + "C:\\ ")
+
+			x = open(loc + choice[1], 'rb')
 			x.write(download)
 			x.close()
 
 		else:
-			print choice + ": Command not found."
+			print "'"choice + "': Command not found."
 		
 		if choice == '`':
 			sys.exit()
