@@ -7,26 +7,30 @@
 import os, sys
 from ftplib import FTP
 from getpass import getpass
-import urllib
-
+import urllib, urllib2
 ulogin = True
 
 ftp = FTP('ftp.tylerclay.com') #connects to website
+user = raw_input(">>> UserName: ") #gets username
 
 while ulogin:
-	user = raw_input(">>> UserName: ") #gets username
 	passw = getpass(">>> Password: ") #gets password
 
 	try:
 		ftp.login(user, passw) #tries to input username and password
 		ulogin = False
 		
-	except(Exception): #catches login error
-		print ">>> Incorrect login."
+	except Exception as e: #catches login error
+		if str(e) == '530 Login incorrect.':
+			print ">>> Incorrect login."
+		else:
+			print ">>> " + str(e)
 		i=0
 		i+=1
 		if i >= 5:
-			exit()
+			print "quitting"
+			ftp.quit()
+			sys.exit()
 
 ftp.cwd('www.tylerclay.com')
 
@@ -119,16 +123,20 @@ rmdir [name]
 		
 		elif choice.split(" ")[0] == 'download':
 			choice = choice.split(" ", 1)
+			print choice
 			print ftp.pwd()
-			download = urllib.urlretrieve('ftp://ftp.tylerclay.com' + ftp.pwd(), choice[1])
-			loc = raw_input("Type the destination path for where you want to save " + choice[1] + "C:\\ ")
 
-			x = open(loc + choice[1], 'rb')
-			x.write(download)
-			x.close()
+			try:
+				loc = raw_input("Type the destination path for where you want to save " + choice[1] + ". C:\\") #get save location from the user
+				
+				x = open("C:\\" + loc + "\\" + choice[1], 'wb') #open file for writing
+				ftp.retrbinary('RETR ' + choice[1], x.write)
+				x.close()
 
+			except(Exception):
+				print "Error. File " + choice[1] + " not found."
 		else:
-			print "'"choice + "': Command not found."
+			print "'" + choice + "': Command not found."
 		
 		if choice == '`':
 			sys.exit()
