@@ -8,8 +8,8 @@ import os, sys
 from ftplib import FTP
 from getpass import getpass
 import urllib, urllib2
-ulogin = True
 
+ulogin = True
 ftp = FTP('ftp.tylerclay.com') #connects to website
 user = raw_input(">>> UserName: ") #gets username
 
@@ -23,12 +23,15 @@ while ulogin:
 	except Exception as e: #catches login error
 		if str(e) == '530 Login incorrect.':
 			print ">>> Incorrect login."
+
 		else:
 			print ">>> " + str(e)
+
 		i=0
 		i+=1
+
 		if i >= 5:
-			print "quitting"
+			print ">>> Incorrect " + i + " times. Closing connection."
 			ftp.quit()
 			sys.exit()
 
@@ -47,7 +50,7 @@ while True:
 		
 		elif choice.lower() == 'help': #prints help for the user
 			print """cd [destination]
-upload [source] [file name]
+upload [file location]
 download [name]
 exit
 help
@@ -67,8 +70,11 @@ rmdir [name]
 				for item in cd:
 					ftp.cwd(item) #changes to directory of choice
 
-			except(Exception):
-				print "Could not find '" + choice.split(" ")[1] + "'. Destination does not exist."
+			except Exception as e:
+				if str(e) == 'FileNotFoundError':
+					print ">>> Could not find '" + choice.split(" ")[1] + "'. Destination does not exist."
+				else:
+					print str(e)
 		
 		elif choice.split(" ")[0] == 'ls': #lists directories and files
 			try:
@@ -76,7 +82,7 @@ rmdir [name]
 				
 				if " " in choice:
 					choice = choice.split(" ", 1)
-					choice = choice[1].split("/")
+					choice = choice.split(" ", 1).split("/")
 						
 					for item in choice:
 						ftp.cwd(item) #allows the user to list in a separate directory
@@ -86,62 +92,57 @@ rmdir [name]
 				ftp.cwd(loc)
 
 			except(Exception):
-				print "Could not find '" + choice.split(" ")[1] + "'. Destination does not exist."
+				print ">>> Could not find '" + choice.split(" ")[1] + "'. Destination does not exist."
 		
 		elif choice.split(" ")[0] == 'mkdir': #makes directory
 			choice = choice.split(" ")
 
 			try:
-				ftp.mkd(choice[1])
+				ftp.mkd(choice[1]) #create specified directory
 
 			except(Exception):
-				print "Destination already exists."
+				print ">>> Destination already exists."
 
 		elif choice.split(" ")[0] == 'rmdir': #removes directory
-			ask = raw_input("Warning! This action cannot be undone. Do you wish to continue?(y/n) ")
+			ask = raw_input(">>> Warning! This action cannot be undone. Do you wish to continue?(y/n) ") #ask user for confirmation to continue
 
 			if ask == 'y':
 				try:
-					ftp.rmd(choice.split(" ")[1])
+					ftp.rmd(choice.split(" ")[1]) #remove specified directory
+
 				except(Exception):
-					print "Could not remove '" + choice.split(" ")[1] + "'. Destination does not exist."
+					print ">>> Could not remove '" + choice.split(" ")[1] + "'. Destination does not exist."
 
 		elif choice.split(" ")[0] == 'upload': #copies file
-			choice = choice.split(" ")
-			loc = choice[1]
-			name = choice[2]
-		
-			try:
+			loc = choice.split(" ")[1]
+			name = loc.split("\\")[len(loc.split("\\")) - 1] #uploads file with same name as the original
 
-				upload = open(loc + name, 'rb') #opens file
+			try:
+				upload = open(loc, 'rb') #opens file
 				ftp.storbinary('STOR ' + name, upload) #sends file
-		
 				upload.close() #closes file
 
 			except(Exception):
-				print "Could not find '" + name + "' in '" + loc + "'."
+				print ">>> Could not find '" + name + ".' in '" + loc + "'."
 		
 		elif choice.split(" ")[0] == 'download':
 			choice = choice.split(" ", 1)
-			print choice
-			print ftp.pwd()
-
 			try:
 				loc = raw_input("Type the destination path for where you want to save " + choice[1] + ". C:\\") #get save location from the user
-				
 				x = open("C:\\" + loc + "\\" + choice[1], 'wb') #open file for writing
 				ftp.retrbinary('RETR ' + choice[1], x.write)
 				x.close()
 
 			except(Exception):
-				print "Error. File " + choice[1] + " not found."
+				print ">>> Error. File " + choice[1] + " not found."
 		else:
-			print "'" + choice + "': Command not found."
+			print ">>> '" + choice + "': Command not found."
 		
 		if choice == '`':
 			sys.exit()
 
-	except(Exception): #catches errors that make it past other error handlers
-		pass
+	except Exception as e: #catches errors that make it past other error handlers
+		print ">>> " + str(e)
 
 nuclear = u'\u2622'
+print nuclear
