@@ -4,10 +4,9 @@
 #FTPConnect	#
 #################
 
-import os, sys
+import sys
 from ftplib import FTP
 from getpass import getpass
-import urllib, urllib2
 
 ulogin = True
 ftp = FTP('ftp.tylerclay.com') #connects to website
@@ -29,9 +28,9 @@ while ulogin:
 
 		i=0
 		i+=1
-
 		if i >= 5:
 			print ">>> Incorrect " + i + " times. Closing connection."
+
 			ftp.quit()
 			sys.exit()
 
@@ -42,12 +41,11 @@ ftp.retrlines('LIST') #list all directories
 
 while True:
 	choice = raw_input('>>> ') #user lists commands
-		
 	try:
 		if choice.lower() == 'exit': #exits program
 			ftp.quit()
 			exit()
-		
+
 		elif choice.lower() == 'help': #prints help for the user
 			print """cd [destination]
 upload [file location]
