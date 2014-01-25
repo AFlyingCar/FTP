@@ -4,12 +4,26 @@
 #FTPConnect	#
 #################
 
-import sys
+import sys, os
 from ftplib import FTP
 from getpass import getpass
 
-ulogin = True
-ftp = FTP('ftp.tylerclay.com') #connects to website
+
+while True:
+	ulogin = True
+	url = raw_input(">>> FTP server (example.com) or (ip.ip.ip:anIP): ") #gets website/server from user
+
+	try:
+		ftp = FTP("ftp." + url) #Allows the user to choose what server to connect to
+		break
+
+	except Exception as e:
+		if str(e) == '[Errno 11001] getaddrinfo failed':
+			print "Could not find '" + str(url) + "'."
+		
+		else:
+			print str(e)
+
 user = raw_input(">>> UserName: ") #gets username
 
 while ulogin:
@@ -34,9 +48,9 @@ while ulogin:
 			ftp.quit()
 			sys.exit()
 
-ftp.cwd('www.tylerclay.com')
+#ftp.cwd('www.tylerclay.com')
 
-print "Permissions", "                                         Last Updated", "Files"
+print "Permissions", "                                         Last Updated", "Files/Folders"
 ftp.retrlines('LIST') #list all directories
 
 while True:
@@ -55,6 +69,7 @@ help
 ls {directory}
 mkdir [name]
 rmdir [name]
+cdir
 """
 
 		elif choice.split(" ")[0] == 'cd':
@@ -118,6 +133,12 @@ rmdir [name]
 			try:
 				upload = open(loc, 'rb') #opens file
 				ftp.storbinary('STOR ' + name, upload) #sends file
+				ftp.sendcmd("TYPE i")
+
+				if ftp.size(name) != upload.tell():
+					wait =  upload.tell() - ftp.size(name)
+					time.sleep(wait)
+
 				upload.close() #closes file
 
 			except(Exception):
@@ -126,13 +147,32 @@ rmdir [name]
 		elif choice.split(" ")[0] == 'download':
 			choice = choice.split(" ", 1)
 			try:
+				print "Current working directory: " + str(os.getcwd())
 				loc = raw_input("Type the destination path for where you want to save " + choice[1] + ". C:\\") #get save location from the user
 				x = open("C:\\" + loc + "\\" + choice[1], 'wb') #open file for writing
 				ftp.retrbinary('RETR ' + choice[1], x.write)
+				ftp.sendcmd("TYPE i")
+
+				if x.tell() != ftp.size(choice[1]):
+					wait = ftp.size(choice[1]) - x.tell()
+					time.sleep(wait)
+				
 				x.close()
 
 			except(Exception):
 				print ">>> Error. File " + choice[1] + " not found."
+
+		elif choice == 'currdir':
+			print ">>> Current os directory: ",
+			print str(os.getcwd())
+
+		elif choice == 'chdir':
+			print ">>> Current working directory:",
+			print str(os.getcwd())
+
+			loc = raw_input(">>> C:\\ ")
+			os.chdir("C:\\\\" + loc)
+
 		else:
 			print ">>> '" + choice + "': Command not found."
 		
@@ -140,7 +180,17 @@ rmdir [name]
 			sys.exit()
 
 	except Exception as e: #catches errors that make it past other error handlers
-		print ">>> " + str(e)
+		if str(e) == "[Errno 10053] An established connection was aborted by your host machine":
+			ftp.quit()
+			sys.exit()
+
+		elif str(e) == "421 No transfer timeout (600 seconds): closing control connection":
+			print "No file transfer for 600 seconds. Closing connection."
+			ftp.quit()
+			sys.exit()
+
+		else:
+			print ">>> " + str(e)
 
 nuclear = u'\u2622'
 print nuclear
