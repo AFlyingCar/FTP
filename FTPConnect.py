@@ -79,6 +79,8 @@ while True:
 			print """cd [destination]
 upload [location] [name]
 download [name]
+rm [name]
+ren [name]
 exit
 help
 ls {directory}
@@ -92,8 +94,8 @@ cdir
 			cd.remove("cd")
 
 			try:
-				if "/" in cd:
-					cd = cd.split("/")
+				if slash in cd:
+					cd = cd.split(slash)
 			
 				for item in cd:
 					ftp.cwd(item) #changes to directory of choice
@@ -128,15 +130,17 @@ cdir
 				if ask_user == user:
 					ftp.delete(choice.split(" ")[1])
 				else:
-					print ">>> Incorrect Login."
+					print ">>> Permission denied. Incorrect Login."
+
 			except Exception:
 				print ">>> Error. Could not find " + choice.split(" ")[1] + "."
 
 		elif choice.split(" ")[0] == 'ren': #rename file
-			name = raw_input(">>> Rename " + choice.split(" ")[1] + " to: ")
+			name = raw_input(">>> Rename " + choice.split(" ")[1] + " to: ") #get new name
 
 			try:
 				ftp.rename(choice.split(" ")[1], name)
+
 			except Exception:
 				print ">>> Could not find " + choice.split(" ")[1] + "."
 			
@@ -208,7 +212,7 @@ cdir
 		elif choice == 'chdir':
 			print ">>> Current working directory:",
 			print str(os.getcwd())
-			loc = raw_input(">>>  ")
+			loc = raw_input(">>> Change directory to: ")
 			os.chdir(loc)
 		
 		elif choice[:2] == "./":
