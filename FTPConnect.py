@@ -7,7 +7,12 @@
 import sys, os
 from ftplib import FTP
 from getpass import getpass
+import platform
 
+if platform.system() == 'Windows':
+	slash = "\\"
+else:
+	slash = "//"
 
 while True:
 	ulogin = True
@@ -24,10 +29,18 @@ while True:
 		else:
 			print str(e)
 
-user = raw_input(">>> UserName: ") #gets username
-
 while ulogin:
+	user = raw_input(">>> UserName: ") #gets username	
+	if user == "!q":
+		print "Closing connection."
+		ftp.quit()
+		sys.exit()
+
 	passw = getpass(">>> Password: ") #gets password
+	if passw == "!q":
+		print "Closing connection."
+		ftp.quit()
+		sys.exit()
 
 	try:
 		ftp.login(user, passw) #tries to input username and password
@@ -57,9 +70,11 @@ while True:
 	choice = raw_input('>>> ') #user lists commands
 	try:
 		if choice.lower() == 'exit': #exits program
-			ftp.quit()
-			exit()
-
+			try:
+				ftp.quit()
+				exit()
+			except EOFError:
+				print "Connection timed out"
 		elif choice.lower() == 'help': #prints help for the user
 			print """cd [destination]
 upload [file location]
@@ -128,7 +143,7 @@ cdir
 
 		elif choice.split(" ")[0] == 'upload': #copies file
 			loc = choice.split(" ")[1]
-			name = loc.split("\\")[len(loc.split("\\")) - 1] #uploads file with same name as the original
+			name = loc.split(slash)[len(loc.split(slash)) - 1] #uploads file with same name as the original
 
 			try:
 				upload = open(loc, 'rb') #opens file
@@ -148,8 +163,13 @@ cdir
 			choice = choice.split(" ", 1)
 			try:
 				print "Current working directory: " + str(os.getcwd())
-				loc = raw_input("Type the destination path for where you want to save " + choice[1] + ". C:\\") #get save location from the user
-				x = open("C:\\" + loc + "\\" + choice[1], 'wb') #open file for writing
+				print "Type 'currdir' to use the current directory."
+				loc = raw_input("Type the destination path for where you want to save " + choice[1] + ": ") #get save location from the user
+
+				if loc == 'currdir':
+					loc = os.getcwd()
+				
+				x = open(loc + slash + choice[1], 'wb') #open file for writing
 				ftp.retrbinary('RETR ' + choice[1], x.write)
 				ftp.sendcmd("TYPE i")
 
@@ -159,7 +179,8 @@ cdir
 				
 				x.close()
 
-			except(Exception):
+			except Exception as e:
+				print e
 				print ">>> Error. File " + choice[1] + " not found."
 
 		elif choice == 'currdir':
@@ -169,15 +190,17 @@ cdir
 		elif choice == 'chdir':
 			print ">>> Current working directory:",
 			print str(os.getcwd())
-
-			loc = raw_input(">>> C:\\ ")
-			os.chdir("C:\\\\" + loc)
-
-		else:
-			print ">>> '" + choice + "': Command not found."
+			loc = raw_input(">>>  ")
+			os.chdir(loc)
 		
-		if choice == '`':
-			sys.exit()
+		elif choice[:2] == "./":
+			ftp.retrbinary('RETR ' + choice.split(choice[:2])
+
+#		else:
+#			print ">>> '" + choice + "': Command not found."
+		
+#		if choice == '`':
+#			sys.exit()
 
 	except Exception as e: #catches errors that make it past other error handlers
 		if str(e) == "[Errno 10053] An established connection was aborted by your host machine":
@@ -185,7 +208,7 @@ cdir
 			sys.exit()
 
 		elif str(e) == "421 No transfer timeout (600 seconds): closing control connection":
-			print "No file transfer for 600 seconds. Closing connection."
+			print "No file transfer for 600 seconds. Connection timed out."
 			ftp.quit()
 			sys.exit()
 
