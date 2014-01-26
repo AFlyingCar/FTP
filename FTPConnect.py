@@ -77,7 +77,7 @@ while True:
 				print "Connection timed out"
 		elif choice.lower() == 'help': #prints help for the user
 			print """cd [destination]
-upload [file location]
+upload [location] [name]
 download [name]
 exit
 help
@@ -122,6 +122,24 @@ cdir
 			except(Exception):
 				print ">>> Could not find '" + choice.split(" ")[1] + "'. Destination does not exist."
 		
+		elif choice.split(" ")[0] == 'rm': #remove file
+			ask_user = raw_input(">>> Server password: ")
+			try:
+				if ask_user == user:
+					ftp.delete(choice.split(" ")[1])
+				else:
+					print ">>> Incorrect Login."
+			except Exception:
+				print ">>> Error. Could not find " + choice.split(" ")[1] + "."
+
+		elif choice.split(" ")[0] == 'ren': #rename file
+			name = raw_input(">>> Rename " + choice.split(" ")[1] + " to: ")
+
+			try:
+				ftp.rename(choice.split(" ")[1], name)
+			except Exception:
+				print ">>> Could not find " + choice.split(" ")[1] + "."
+			
 		elif choice.split(" ")[0] == 'mkdir': #makes directory
 			choice = choice.split(" ")
 
@@ -148,11 +166,11 @@ cdir
 			try:
 				upload = open(loc, 'rb') #opens file
 				ftp.storbinary('STOR ' + name, upload) #sends file
-				ftp.sendcmd("TYPE i")
+#				ftp.sendcmd("TYPE i")
 
-				if ftp.size(name) != upload.tell():
-					wait =  upload.tell() - ftp.size(name)
-					time.sleep(wait)
+#				if ftp.size(name) != upload.tell():
+#					wait =  upload.tell() - ftp.size(name)
+#					time.sleep(wait)
 
 				upload.close() #closes file
 
@@ -194,13 +212,13 @@ cdir
 			os.chdir(loc)
 		
 		elif choice[:2] == "./":
-			ftp.retrbinary('RETR ' + choice.split(choice[:2])
+			ftp.retrbinary('RETR ' + choice.split(choice[:2]))
 
-#		else:
-#			print ">>> '" + choice + "': Command not found."
+		else:
+			print ">>> '" + choice + "': Command not found."
 		
-#		if choice == '`':
-#			sys.exit()
+		if choice == '`':
+			sys.exit()
 
 	except Exception as e: #catches errors that make it past other error handlers
 		if str(e) == "[Errno 10053] An established connection was aborted by your host machine":
