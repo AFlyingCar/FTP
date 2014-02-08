@@ -61,8 +61,6 @@ while ulogin:
 			ftp.quit()
 			sys.exit()
 
-#ftp.cwd('www.tylerclay.com')
-
 print "Permissions", "                                         Last Updated", "Files/Folders"
 ftp.retrlines('LIST') #list all directories
 
@@ -86,7 +84,7 @@ help
 ls {directory}
 mkdir [name]
 rmdir [name]
-cdir
+chdir
 """
 
 		elif choice.split(" ")[0] == 'cd':
@@ -125,7 +123,7 @@ cdir
 				print ">>> Could not find '" + choice.split(" ")[1] + "'. Destination does not exist."
 		
 		elif choice.split(" ")[0] == 'rm': #remove file
-			ask_user = raw_input(">>> Server password: ")
+			ask_user = getpass(">>> Server password: ")
 			try:
 				if ask_user == user:
 					ftp.delete(choice.split(" ")[1])
@@ -143,6 +141,56 @@ cdir
 
 			except Exception:
 				print ">>> Could not find " + choice.split(" ")[1] + "."
+
+		elif choice.split(" ")[0] == 'read': #read file
+			name = choice.split(" ", 1)[1]
+			extension = choice.split(" ", 1)[1].split(".")[1] #get file extension
+
+			try:
+				i = ''
+				if "temp" in os.getcwd(): #stops temp dir from overwriting existing temp dirs
+					for item in os.getcwd():
+						if item == "temp":
+							i += 1
+
+				while True:
+					try:
+						os.mkdir("temp" + str(i)) #make temp directory
+						os.chdir("temp")
+						break
+					except OSError as e:
+						print e
+
+				try:
+					loc = ftp.pwd()
+					choice = choice.split(" ", 1)
+					choice = choice.split(" ", 1).split("/")
+
+					for item in choice:
+						ftp.cwd(item)
+
+				except Exception:
+					print ">>> Could not find '" + choice.split(" ")[1] + "'. Destination does not exist."
+
+				x = open("temp." + extension, 'wb') #make tempfile
+				ftp.retrbinary('RETR ' + choice.split(" ", 1)[1], x.write) #write to tempfile
+				ftp.sendcmd('TYPE i')
+				x.close()
+
+				x = open("temp." + extension, 'rb') #read tempfile
+				print x.read(),
+				raw_input("> Press any key to continue: ")
+				x.close()
+
+			except Exception as e:
+				print "error"
+				print str(e)
+
+			os.remove("temp." + extension) #remove tempfile and folder
+			os.chdir("..")
+			os.rmdir("temp")
+			ftp.cwd(loc)
+
 			
 		elif choice.split(" ")[0] == 'mkdir': #makes directory
 			choice = choice.split(" ")
@@ -170,11 +218,6 @@ cdir
 			try:
 				upload = open(loc, 'rb') #opens file
 				ftp.storbinary('STOR ' + name, upload) #sends file
-#				ftp.sendcmd("TYPE i")
-
-#				if ftp.size(name) != upload.tell():
-#					wait =  upload.tell() - ftp.size(name)
-#					time.sleep(wait)
 
 				upload.close() #closes file
 
@@ -195,10 +238,6 @@ cdir
 				ftp.retrbinary('RETR ' + choice[1], x.write)
 				ftp.sendcmd("TYPE i")
 
-				if x.tell() != ftp.size(choice[1]):
-					wait = ftp.size(choice[1]) - x.tell()
-					time.sleep(wait)
-				
 				x.close()
 
 			except Exception as e:
@@ -238,4 +277,3 @@ cdir
 			print ">>> " + str(e)
 
 nuclear = u'\u2622'
-print nuclear
